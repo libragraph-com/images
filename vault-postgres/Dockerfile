@@ -21,7 +21,7 @@ LABEL org.opencontainers.image.source=https://github.com/libragraph-com/images
 # against the Debian and PGDG signing keys the base carries.
 #
 # libarmadillo14 is the one package whose version differs by architecture (a binNMU built for amd64 alone), so it is
-# pinned per platform; its dependencies are installed first so that step adds it alone.
+# pinned per platform, in one `case "$TARGETARCH"` arm each; its dependencies are installed first so that step adds it alone.
 RUN --mount=type=bind,source=apt-archive-ca.pem,target=/run/apt-archive-ca.pem \
     set -eux; \
     mkdir -p /tmp/pin/sources.list.d; \
@@ -41,11 +41,10 @@ RUN --mount=type=bind,source=apt-archive-ca.pem,target=/run/apt-archive-ca.pem \
         libblas3=3.12.1-6 \
         libgfortran5=14.2.0-19 \
         liblapack3=3.12.1-6; \
-    if [ "$TARGETARCH" = amd64 ]; then \
-        apt-get install -y --no-install-recommends libarmadillo14=1:14.2.3+dfsg-1+b1; \
-    else \
-        apt-get install -y --no-install-recommends libarmadillo14=1:14.2.3+dfsg-1; \
-    fi; \
+    case "$TARGETARCH" in \
+        amd64) apt-get install -y --no-install-recommends libarmadillo14=1:14.2.3+dfsg-1+b1 ;; \
+        arm64) apt-get install -y --no-install-recommends libarmadillo14=1:14.2.3+dfsg-1 ;; \
+    esac; \
     apt-get install -y --no-install-recommends \
         fontconfig-config=2.15.0-2.3 \
         fonts-dejavu-core=2.37-8 \
