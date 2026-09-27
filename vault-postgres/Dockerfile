@@ -138,4 +138,4 @@ RUN --mount=type=bind,source=apt-archive-ca.pem,target=/run/apt-archive-ca.pem \
         postgresql-17-postgis-3-scripts=3.6.4+dfsg-2.pgdg13+1 \
         proj-data=9.8.1-1.pgdg13+1 \
         unixodbc-common=2.3.12-2+deb13u1; \
-    rm -rf /tmp/pin /var/lib/apt/lists/* /var/cache/apt/*.bin /var/log/apt/* /var/log/dpkg.log /var/cache/ldconfig/aux-cache
+    rm -rf /tmp/pin /var/lib/apt/lists/* /var/cache/apt/*.bin /var/log/apt/* /var/log/dpkg.log /var/log/alternatives.log /var/cache/ldconfig/aux-cache

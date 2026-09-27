@@ -16,7 +16,7 @@ secret.
   an `apt-get install` adds over the base is named `name=version` — the packages asked for **and every dependency apt
   pulls in with them** — so the pins are the complete list the SBOM names. Debian comes from `snapshot.debian.org` at
   a fixed timestamp and PGDG from `apt-archive.postgresql.org`, which keeps every published version. A bump is a
-  commit; the layer that writes the apt lists, the apt and dpkg logs and the ldconfig aux-cache removes them, so no
+  commit; the layer that writes the apt lists, the apt, dpkg and update-alternatives logs and the ldconfig aux-cache removes them, so no
   file depends on when the build ran and a rebuild from a tag reproduces the tag's bytes.
 - **No preloaded library.** An image sets no `shared_preload_libraries`: a preloaded background worker holds a
   session on every database, the clone template included, and `CREATE DATABASE … TEMPLATE` refuses a template
