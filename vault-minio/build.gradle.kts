@@ -26,7 +26,7 @@ libragraphBuild {
     )
 }
 
-// BFR-004 — every git source the Dockerfile ADDs is named by a 40-hex commit sha and carries an equal --checksum, which
+// BFR-004 — every base the Dockerfile builds on is named by its index digest, and every git source it ADDs is named by a 40-hex commit sha and carries an equal --checksum, which
 // BuildKit verifies against the clone's head. `${NAME}` references resolve through the Dockerfile's own ARG defaults.
 fun unpinnedSources(dockerfile: String): List<String> {
     val args = mutableMapOf<String, String>()
@@ -36,6 +36,10 @@ fun unpinnedSources(dockerfile: String): List<String> {
         val words = line.trim().split(Regex("\\s+"))
         when (words.firstOrNull()?.uppercase()) {
             "ARG" -> words.drop(1).filter { '=' in it }.forEach { args[it.substringBefore('=')] = it.substringAfter('=').trim('"') }
+            "FROM" -> {
+                val image = words.drop(1).firstOrNull { !it.startsWith("--") }
+                if (image != null && !Regex(".+@sha256:[0-9a-f]{64}").matches(resolve(image))) problems += "line ${index + 1}: FROM $image names its base by other than <ref>@sha256:<64 hex>"
+            }
             "ADD" -> {
                 val resolved = words.drop(1).map { resolve(it) }
                 val source = resolved.firstOrNull { !it.startsWith("--") } ?: return@forEachIndexed
@@ -54,7 +58,7 @@ fun unpinnedSources(dockerfile: String): List<String> {
 
 val assertSourcePinned = tasks.register("assertSourcePinned") {
     group = "verification"
-    description = "Fail naming the line of any ADD git source without a 40-hex sha or with a --checksum that differs from it (TASK-IMAGES-022VXK AC1)."
+    description = "Fail naming the line of any FROM without an index digest, any ADD git source without a 40-hex sha or with a --checksum that differs from it (TASK-IMAGES-022VXK AC1)."
     val dockerfile = layout.projectDirectory.file("Dockerfile")
     inputs.file(dockerfile)
     doLast {
@@ -67,7 +71,9 @@ val assertSourcePinned = tasks.register("assertSourcePinned") {
         check(byTag.isNotEmpty()) { "negative control: an ADD naming a tag was accepted" }
         val byChecksum = unpinnedSources(text.replace("--checksum=\${MC_COMMIT}", "--checksum=\${MINIO_COMMIT}"))
         check(byChecksum.isNotEmpty()) { "negative control: an ADD whose --checksum differs from its sha was accepted" }
-        logger.lifecycle("assertSourcePinned: the Dockerfile's sources are pinned; negative controls refused: ${byTag.first()} | ${byChecksum.first()}")
+        val byTagBase = unpinnedSources(text.replace(Regex("(?m)^(FROM .*?)@sha256:[0-9a-f]{64}"), "$1"))
+        check(byTagBase.isNotEmpty()) { "negative control: a FROM naming a base by a tag was accepted" }
+        logger.lifecycle("assertSourcePinned: the Dockerfile's sources are pinned; negative controls refused: ${byTag.first()} | ${byChecksum.first()} | ${byTagBase.first()}")
     }
 }
 
