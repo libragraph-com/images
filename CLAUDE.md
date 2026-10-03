@@ -34,6 +34,7 @@ secret.
 | Module | Image | What |
 |---|---|---|
 | `vault-postgres/` | `ghcr.io/libragraph-com/vault-postgres` | PostgreSQL 17 (`postgres:17-trixie`) with PostGIS and pgvector from PGDG — the extensions the vault's schema creates (`citext`, `pgcrypto`, `postgis`, `vector`) — preloading no library, for `linux/amd64` and `linux/arm64` |
+| `vault-minio/` | `ghcr.io/libragraph-com/vault-minio` | MinIO and its `mc` client built from source at the last upstream release tags (each pinned by commit sha, its Go module graph by `go.sum`) on `debian:trixie-slim`, installing nothing, for the dev vault's object store; AGPL-3.0, so the image carries `/licenses/` with the sources' texts and the written offer, for `linux/amd64` and `linux/arm64` |
 
 ## Build — the verbs, and nothing but the verbs
 

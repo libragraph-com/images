@@ -29,3 +29,4 @@ plugins { id("com.libragraph.build-tools") }
 rootProject.name = "images"
 
 include(":vault-postgres")
+include(":vault-minio")
