@@ -39,11 +39,17 @@ RUN set -eux; \
     build minio "${MINIO_TAG}" "${MINIO_COMMIT}"; \
     build mc "${MC_TAG}" "${MC_COMMIT}"
 
-# The corresponding source and licence texts the image carries, with the written offer AGPL-3.0 §6(d) asks for.
+# The root the runtime stage takes whole: the two binaries, the upstream entrypoint verbatim from the pinned commit, and the
+# source and licence texts the image carries with the written offer AGPL-3.0 §6(d) asks for. Every entry of it gets a fixed
+# modification time, directories included: the build's timestamp rewrite only lowers a time above the commit's, so a layer
+# cached before the commit would otherwise carry a different time than a fresh build, and the one layer is what makes
+# a rebuild from the tag reproduce the tag's bytes whatever the build cache holds.
 RUN set -eux; \
-    mkdir -p /licenses/minio /licenses/mc; \
+    mkdir -p /rootfs/usr/bin /rootfs/licenses/minio /rootfs/licenses/mc; \
+    cp /out/minio /out/mc /rootfs/usr/bin/; \
+    install -m 0755 /src/minio/dockerscripts/docker-entrypoint.sh /rootfs/usr/bin/docker-entrypoint.sh; \
     for repo in minio mc; do \
-        for file in LICENSE CREDITS go.mod go.sum; do cp "/src/${repo}/${file}" "/licenses/${repo}/${file}"; done; \
+        for file in LICENSE CREDITS go.mod go.sum; do cp "/src/${repo}/${file}" "/rootfs/licenses/${repo}/${file}"; done; \
     done; \
     { \
         echo 'vault-minio carries MinIO and its mc client, each licensed AGPL-3.0-only (the texts are in /licenses/<component>/LICENSE).'; \
@@ -55,18 +61,15 @@ RUN set -eux; \
         echo 'Each component is the upstream source at that tag and commit, compiled unmodified by the Dockerfile in https://github.com/libragraph-com/images (vault-minio/Dockerfile).'; \
         echo 'Written offer (AGPL-3.0 section 6(d)): the corresponding source is that tag at that URL plus that Dockerfile, and LibRAGraph supplies it to anyone who asks, through https://github.com/libragraph-com/images.'; \
         echo '/licenses/<component>/ also holds go.mod and go.sum, the module graph each binary was built from, and CREDITS, the third-party licence texts upstream vendors for it.'; \
-    } > /licenses/SOURCE
+    } > /rootfs/licenses/SOURCE; \
+    find /rootfs -exec touch -h -d @0 {} +
 
 FROM debian:trixie-slim@sha256:a99cfc517144bc59b1978475ec53b46ecabec7e43635402ee5b77cc54cd1b20a
 
 LABEL org.opencontainers.image.source=https://github.com/libragraph-com/images \
       org.opencontainers.image.licenses=AGPL-3.0-only
 
-COPY --from=build /out/minio /out/mc /usr/bin/
-# The upstream entrypoint, verbatim from the pinned commit: it prepends `minio` unless the command already starts with it,
-# so `server /data` and `minio server /data` both start the server.
-COPY --from=build --chmod=0755 /src/minio/dockerscripts/docker-entrypoint.sh /usr/bin/docker-entrypoint.sh
-COPY --from=build /licenses /licenses
+COPY --from=build /rootfs/ /
 
 VOLUME ["/data"]
 EXPOSE 9000
