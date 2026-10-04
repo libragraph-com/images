@@ -1,2 +1,5 @@
 build/
 .gradle/
+
+# The Kotlin Gradle plugin's session directory, written while a run compiles Kotlin build logic
+.kotlin/
