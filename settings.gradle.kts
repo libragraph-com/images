@@ -8,8 +8,8 @@ pluginManagement {
                 maven(channel) {
                     isAllowInsecureProtocol = uri(channel).host == "127.0.0.1"
                     credentials {
-                        username = providers.environmentVariable("GITHUB_ACTOR").orElse(providers.gradleProperty("gpr.user")).getOrElse("")
-                        password = providers.environmentVariable("GITHUB_TOKEN").orElse(providers.gradleProperty("gpr.key")).getOrElse("")
+                        username = providers.gradleProperty("gpr.user").getOrElse("")
+                        password = providers.gradleProperty("gpr.key").getOrElse("")
                     }
                 },
             )

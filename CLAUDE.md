@@ -39,8 +39,9 @@ secret.
 ## Build — the verbs, and nothing but the verbs
 
 The build applies the `com.libragraph.build-tools` convention plugin; the root project is a pure aggregate over the
-modules. Resolving the plugin needs `GITHUB_TOKEN` (GitHub Packages requires a credential even to read); the
-Dockerfiles themselves build with plain `docker build`.
+modules. Resolving the plugin needs the org channel's credential — the Gradle properties `gpr.user` and `gpr.key`, a
+literal or a `${secret://…}` address — because GitHub Packages requires one even to read; the Dockerfiles themselves
+build with plain `docker build`.
 
 ```bash
 ./gradlew gate                                  # the quality gate
