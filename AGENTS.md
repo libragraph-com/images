@@ -26,6 +26,9 @@ secret.
   read, and attaches a cosign attestation of its CycloneDX SBOM signed by the `global` channel's KMS key. The key's
   public half is `cosign.pub` at the repo root, so any puller verifies with no LibRAGraph credential:
   `cosign verify-attestation --type cyclonedx --key cosign.pub ghcr.io/libragraph-com/<image>@<digest>`.
+- **Every image carries a counted boot check.** A module's `gate` runs a MUSTr boot check over the image it just built and its
+  negative control, so the gate never reads EMPTY and the coordinate can be graded (`BFR-140`); each image's check is named
+  in `README.md`.
 - **The verbs are the only build and publish path.** Never a raw `docker build` / `docker push` / Gradle task for a
   release; the image, its tag and its upload are the convention plugin's.
 
@@ -38,8 +41,8 @@ secret.
 
 ## Build — the verbs, and nothing but the verbs
 
-The build applies the `com.libragraph.build-tools` convention plugin; the root project is a pure aggregate over the
-modules. Resolving the plugin needs the org channel's credential — the Gradle properties `gpr.user` and `gpr.key`, a
+The build applies the `com.libragraph.build-tools` convention plugin, and each image module the house MUSTr plugin
+`com.libragraph.shared-mustr` for its boot check; the root project is a pure aggregate over the modules. Resolving the plugin needs the org channel's credential — the Gradle properties `gpr.user` and `gpr.key`, a
 literal or a `${secret://…}` address — because GitHub Packages requires one even to read; the Dockerfiles themselves
 build with plain `docker build`.
 
